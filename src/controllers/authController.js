@@ -1,6 +1,13 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
+
+const generateToken = (id, email) => {
+    const jwtScret = "asidas99";
+
+    return jwt.sign({ id, email}, jwtScret, {expiresIn: "1d"});
+}
 
 const register = async (req, res) => {
     try{
@@ -46,4 +53,56 @@ const register = async (req, res) => {
     
 }
 
-module.exports = { register };
+const login = async (req, res) => {
+    try{
+        const { email, password } = req.body;
+
+        if(!email || !password){
+            return res.status(400).json({
+                message: "Email and Password are required!"
+            });
+        }
+
+        const user =  await User.findOne({email: String(email).toLowerCase()});
+
+        if(!user){
+            return res.status(401).json({
+                message: "Invalid email or password."
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if(!isPasswordValid){
+            return res.status(401).json({
+                message: "Invalid email or password."
+            });
+        }
+
+        const token = generateToken(String(user._id), user.email);
+        
+        return res.json({
+            message: "Login successful",
+            data: {
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
+            }
+        });
+    }
+    catch(error){
+        console.log(error);
+        return res.status(500).json({message: "Error while connecting user!"});
+    }
+}
+
+const getMe = (req, res) => {
+
+}
+
+module.exports = { register, login, getMe};
