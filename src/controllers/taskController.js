@@ -85,4 +85,49 @@ const getTasks = async (req, res) => {
   }
 };
 
-module.exports = { createTask, getTasks };
+const deleteTask = async (req, res) => {
+    try{
+        const { id } = req.params;
+
+        if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Unauthorized." });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid Task Id." });
+        }
+
+        const task = await Task.findById(id);
+        if(!task){
+            return res.status(404).json({ message: "Task not found." });
+        }
+
+        if(task.userId.toString() !== req.user.id){
+            return res.status(403).json({ message: "Only the task owner can delete this task." });
+        }
+
+        await task.deleteOne();
+
+        return res.status(200).json({
+            message: "Task deleted successfully.",
+            data: {
+                task
+            }
+        });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Error while deleting task." });
+    }
+    
+}
+
+const updateTask = async (req, res) => {
+
+
+    return res.status(200).json({
+        message: "Task updated successfully."
+    });
+}
+
+module.exports = { createTask, getTasks, deleteTask };
