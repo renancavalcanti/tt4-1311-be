@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: 'http://localhost:5000'
+  apiUrl: 'https://tt4-1311-be.onrender.com'
 };
 
 
