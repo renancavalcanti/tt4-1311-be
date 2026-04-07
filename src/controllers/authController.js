@@ -9,6 +9,14 @@ const generateToken = (id, email) => {
     return jwt.sign({ id, email}, jwtScret, {expiresIn: "1d"});
 }
 
+const serializeUser = (user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+});
+
 const register = async (req, res) => {
     try{
         const { name, email, password } = req.body;
@@ -128,4 +136,31 @@ const getMe = async (req, res) => {
     }
 }
 
-module.exports = { register, login, getMe};
+
+const listUsers = async (req, res) => {
+    try{
+        if(!req.user.id){
+                return res.status(401).json({
+                    message: "Unauthorized"
+            });
+        }
+
+        const users = await User.find({_id: {$ne: req.user.id}})
+            .select("-password")
+            .sort({name: 1});
+        
+        return res.json({
+            message: "Users fetched successfully",
+            data: {
+                users: users.map(serializeUser)
+            }
+        });
+    }
+    catch(error){
+        console.log(error);
+        return res.status(500).json({message: "Error while fetching users!"});
+    } 
+
+}
+
+module.exports = { register, login, getMe, listUsers};
